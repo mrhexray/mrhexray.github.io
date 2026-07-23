@@ -1,0 +1,272 @@
+<!doctype html><html lang=en-us><head><meta charset=utf-8><meta http-equiv=content-type content="text/html"><meta name=viewport content="width=device-width,initial-scale=1"><title itemprop=name>Update journal | Mr Hex Blog</title><meta property="og:title" content="Update journal | Mr Hex Blog"><meta name=twitter:title content="Update journal | Mr Hex Blog"><meta itemprop=name content="Update journal | Mr Hex Blog"><meta name=application-name content="Update journal | Mr Hex Blog"><meta property="og:site_name" content><meta name=description content><meta itemprop=description content><meta property="og:description" content><meta name=twitter:description content><meta property="og:locale" content="en-us"><meta name=language content="en-us"><link rel=alternate hreflang=en href=https://mrhexray.github.io/blog/posts/update_journal/ title><meta property="og:type" content="article"><meta property="og:article:published_time" content=2026-06-09T19:05:48Z><meta property="article:published_time" content=2026-06-09T19:05:48Z><meta property="og:url" content="https://mrhexray.github.io/blog/posts/update_journal/"><script defer type=application/ld+json>{"@context":"http://schema.org","@type":"Article","headline":"Update journal","author":{"@type":"Person","name":""},"datePublished":"2026-06-09","description":"","wordCount":1909,"mainEntityOfPage":"True","dateModified":"2026-06-09","image":{"@type":"imageObject","url":""},"publisher":{"@type":"Organization","name":"Mr Hex Blog"}}</script><meta name=generator content="Hugo 0.164.0"><meta property="og:url" content="https://mrhexray.github.io/blog/posts/update_journal/"><meta property="og:site_name" content="Mr Hex Blog"><meta property="og:title" content="Update journal"><meta property="og:description" content='Before I work on sys_monitor I will update the current student database a bit and here is the git diff (I didn’t committed changes from previous chat message to you, so you may see those changes along side newer changes) :
+diff --git a/Makefile b/Makefile index 3245142..8ebd6c5 100644 --- a/Makefile +++ b/Makefile @@ -3,9 +3,29 @@ CC=gcc CFLAGS=-Wall -Wextra -Werror SRC=$(wildcard src/*.c) OBJ=$(patsubst src/%.c, obj/%.o, $(SRC)) +TEST_DB_FILE=mydb.db +TEST_FILE=test_output.log +## CURRENT_DIR := $(CURDIR) run: clean $(TARGET) +test: clean $(TARGET) +	-$(TARGET) -f $(TEST_DB_FILE) -h > $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -n >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -l >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -a "Jennifer Lawrence, 10" >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -a "Maria Slovak, 11" >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -l >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -a "Andrew Herrat, 11" >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -u "2,Maria Angel, 12" >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -l >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -a "Andy Rhomand, 12" >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-xxd $(TEST_DB_FILE) >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-echo "\n" >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -d 2 >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -l >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 + + clean: echo $(OBJ) echo $(SRC) diff --git a/src/parse.c b/src/parse.c index 1fc948c..eb202cd 100644 --- a/src/parse.c +++ b/src/parse.c @@ -185,12 +185,12 @@ void list_students(struct dbheader_t* dbheader, struct student_t* students) { continue; } printf("id : %d\n",(int)students[i].id); -	printf("name : %s\n",students[i].name); -	printf("grade : %d\n", (int)students[i].grade); -	printf("status_flags : %d\n", (int)students[i].status_flags); -	printf("Enrolled : %s", (students[i].status_flags & FLAG_ACTIVE) ? "YES\n" : "NO\n"); -	printf("Graduated : %s", (students[i].status_flags & FLAG_GRADUATED) ? "YES\n" : "NO\n"); -	printf("Tution Paid : %s\n", (students[i].status_flags & FLAG_TUITION_PAID) ? "YES\n" : "NO\n"); +	printf("\tname : %s\n",students[i].name); +	printf("\tgrade : %d\n", (int)students[i].grade); +	printf("\tstatus_flags : %d\n", (int)students[i].status_flags); +	printf("\tEnrolled : %s", (students[i].status_flags & FLAG_ACTIVE) ? "YES\n" : "NO\n"); +	printf("\tGraduated : %s", (students[i].status_flags & FLAG_GRADUATED) ? "YES\n" : "NO\n"); +	printf("\tTution Paid : %s\n", (students[i].status_flags & FLAG_TUITION_PAID) ? "YES\n" : "NO\n"); } }	@@ -218,8 +218,7 @@ int read_students(int fd, struct dbheader_t* dbheader, struct student_t** studen } // converting id of every student in students array to host endian for(int i=0; i< dbheader->count; i++) { -	// skip the deleted records (we are not gonna use them anyways) -	if(!(students[i].status_flags & FLAG_DELETED)) students[i].id = ntohl(students[i].id); +	students[i].id = ntohl(students[i].id); // since status flags and grade are one byte we don&#39;t need to convert their endian } *studentsOut = students; @@ -250,13 +249,11 @@ int write_to_disk(int fd, struct dbheader_t* dbheader, struct student_t* student } // then write the list of students to disk - NOTE : add bool to see if we even need to write students -	struct student_t* net_students = malloc(dbheader->count*sizeof(struct student_t)); memcpy(net_students, students, dbheader->count*sizeof(struct student_t)); // creating a copy od students array // converting id of every student in net_students array to network endian for(int i=0; i< dbheader->count; i++) { -	// skip the deleted records -	if(!(net_students[i].status_flags & FLAG_DELETED)) net_students[i].id = htonl(net_students[i].id); +	net_students[i].id = htonl(net_students[i].id); // since status flags and grade are one byte we don&#39;t need to convert their endian } // finally write the students list to disk Now I will talk about my work and progress on sys_monitor.'><meta property="og:locale" content="en_us"><meta property="og:type" content="article"><meta property="article:section" content="posts"><meta property="article:published_time" content="2026-06-09T19:05:48+00:00"><meta property="article:modified_time" content="2026-06-09T19:05:48+00:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="Update journal"><meta name=twitter:description content='Before I work on sys_monitor I will update the current student database a bit and here is the git diff (I didn’t committed changes from previous chat message to you, so you may see those changes along side newer changes) :
+diff --git a/Makefile b/Makefile index 3245142..8ebd6c5 100644 --- a/Makefile +++ b/Makefile @@ -3,9 +3,29 @@ CC=gcc CFLAGS=-Wall -Wextra -Werror SRC=$(wildcard src/*.c) OBJ=$(patsubst src/%.c, obj/%.o, $(SRC)) +TEST_DB_FILE=mydb.db +TEST_FILE=test_output.log +## CURRENT_DIR := $(CURDIR) run: clean $(TARGET) +test: clean $(TARGET) +	-$(TARGET) -f $(TEST_DB_FILE) -h > $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -n >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -l >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -a "Jennifer Lawrence, 10" >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -a "Maria Slovak, 11" >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -l >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -a "Andrew Herrat, 11" >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -u "2,Maria Angel, 12" >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -l >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -a "Andy Rhomand, 12" >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-xxd $(TEST_DB_FILE) >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-echo "\n" >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -d 2 >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 +	-$(TARGET) -f $(TEST_DB_FILE) -l >> $(CURDIR)/$(TEST_FILE) 2>&amp;1 + + clean: echo $(OBJ) echo $(SRC) diff --git a/src/parse.c b/src/parse.c index 1fc948c..eb202cd 100644 --- a/src/parse.c +++ b/src/parse.c @@ -185,12 +185,12 @@ void list_students(struct dbheader_t* dbheader, struct student_t* students) { continue; } printf("id : %d\n",(int)students[i].id); -	printf("name : %s\n",students[i].name); -	printf("grade : %d\n", (int)students[i].grade); -	printf("status_flags : %d\n", (int)students[i].status_flags); -	printf("Enrolled : %s", (students[i].status_flags & FLAG_ACTIVE) ? "YES\n" : "NO\n"); -	printf("Graduated : %s", (students[i].status_flags & FLAG_GRADUATED) ? "YES\n" : "NO\n"); -	printf("Tution Paid : %s\n", (students[i].status_flags & FLAG_TUITION_PAID) ? "YES\n" : "NO\n"); +	printf("\tname : %s\n",students[i].name); +	printf("\tgrade : %d\n", (int)students[i].grade); +	printf("\tstatus_flags : %d\n", (int)students[i].status_flags); +	printf("\tEnrolled : %s", (students[i].status_flags & FLAG_ACTIVE) ? "YES\n" : "NO\n"); +	printf("\tGraduated : %s", (students[i].status_flags & FLAG_GRADUATED) ? "YES\n" : "NO\n"); +	printf("\tTution Paid : %s\n", (students[i].status_flags & FLAG_TUITION_PAID) ? "YES\n" : "NO\n"); } }	@@ -218,8 +218,7 @@ int read_students(int fd, struct dbheader_t* dbheader, struct student_t** studen } // converting id of every student in students array to host endian for(int i=0; i< dbheader->count; i++) { -	// skip the deleted records (we are not gonna use them anyways) -	if(!(students[i].status_flags & FLAG_DELETED)) students[i].id = ntohl(students[i].id); +	students[i].id = ntohl(students[i].id); // since status flags and grade are one byte we don&#39;t need to convert their endian } *studentsOut = students; @@ -250,13 +249,11 @@ int write_to_disk(int fd, struct dbheader_t* dbheader, struct student_t* student } // then write the list of students to disk - NOTE : add bool to see if we even need to write students -	struct student_t* net_students = malloc(dbheader->count*sizeof(struct student_t)); memcpy(net_students, students, dbheader->count*sizeof(struct student_t)); // creating a copy od students array // converting id of every student in net_students array to network endian for(int i=0; i< dbheader->count; i++) { -	// skip the deleted records -	if(!(net_students[i].status_flags & FLAG_DELETED)) net_students[i].id = htonl(net_students[i].id); +	net_students[i].id = htonl(net_students[i].id); // since status flags and grade are one byte we don&#39;t need to convert their endian } // finally write the students list to disk Now I will talk about my work and progress on sys_monitor.'><link rel=canonical href=https://mrhexray.github.io/blog/posts/update_journal/><link href=/blog/style.min.e390ba7da26222f4dc42a349955d76dbbe44e5ce2535a43de5a70633a0a9ec3c.css rel=stylesheet><link href=/blog/code-highlight.min.706d31975fec544a864cb7f0d847a73ea55ca1df91bf495fd12a177138d807cf.css rel=stylesheet><link rel=apple-touch-icon sizes=180x180 href=/blog/icons/apple-touch-icon.png><link rel=icon type=image/png sizes=32x32 href=/blog/icons/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/blog/icons/favicon-16x16.png><link rel=mask-icon href=/blog/icons/safari-pinned-tab.svg><link rel="shortcut icon" href=/blog/favicon.ico><link rel=manifest href=https://mrhexray.github.io/blog/site.webmanifest><meta name=msapplication-config content="/blog/browserconfig.xml"><meta name=msapplication-TileColor content="#2d89ef"><meta name=theme-color content="#434648"><meta name=color-scheme content="light dark"><link rel=icon type=image/svg+xml href=/blog/icons/favicon.svg></head><body data-theme class=notransition><script src=/blog/js/theme.min.8961c317c5b88b953fe27525839672c9343f1058ab044696ca225656c8ba2ab0.js integrity="sha256-iWHDF8W4i5U/4nUlg5ZyyTQ/EFirBEaWyiJWVsi6KrA="></script><div class=navbar role=navigation><nav class=menu aria-label="Main Navigation"><a href=https://mrhexray.github.io/blog/ class=logo><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-home"><title>Home</title><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+</a><input type=checkbox id=menu-trigger class=menu-trigger>
+<label for=menu-trigger><span class=menu-icon><svg width="25" height="25" stroke="currentColor" fill="none" viewBox="0 0 14 14"><title>Menu</title><path stroke-linecap="round" stroke-linejoin="round" d="M10.595 7H3.40726"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 3.51488H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M10.5096 10.4851H3.49301"/><path stroke-linecap="round" stroke-linejoin="round" d="M.5 12.5V1.5c0-.552285.447715-1 1-1h11C13.0523.5 13.5.947715 13.5 1.5v11C13.5 13.0523 13.0523 13.5 12.5 13.5H1.5C.947715 13.5.5 13.0523.5 12.5z"/></svg></span></label><div class=trigger><ul class=trigger-container><li class=menu-separator><span>|</span></li></ul><a id=mode href=#><svg class="mode-sunny" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>LIGHT</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg>
+<svg class="mode-moon" width="21" height="21" viewBox="0 0 14 14" stroke-width="1"><title>DARK</title><g><circle cx="7" cy="7" r="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1=".5" x2="7" y2="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="2.4" x2="3.82" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1=".5" y1="7" x2="2.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="2.4" y1="11.6" x2="3.82" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="13.5" x2="7" y2="11.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="11.6" x2="10.18" y2="10.18" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="13.5" y1="7" x2="11.5" y2="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><line x1="11.6" y1="2.4" x2="10.18" y2="3.82" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g></svg></a></div></nav></div><div class="wrapper post"><main class=page-content aria-label=Content><article><header class=header><h1 class=header-title>Update journal</h1><div class=post-meta><time datetime=2026-06-09T19:05:48+00:00 itemprop=datePublished>9 Jun 2026</time></div></header><div class=page-content><p>Before I work on <code>sys_monitor</code> I will update the current student database a bit and here is the git diff (I didn&rsquo;t committed changes from previous chat message to you, so you may see those changes along side newer changes) :</p><pre tabindex=0><code>diff --git a/Makefile b/Makefile
+index 3245142..8ebd6c5 100644
+--- a/Makefile
++++ b/Makefile
+@@ -3,9 +3,29 @@ CC=gcc
+ CFLAGS=-Wall -Wextra -Werror
+ SRC=$(wildcard src/*.c)
+ OBJ=$(patsubst src/%.c, obj/%.o, $(SRC))
++TEST_DB_FILE=mydb.db
++TEST_FILE=test_output.log
++## CURRENT_DIR := $(CURDIR)
+ 
+ run: clean $(TARGET)
+ 
++test: clean $(TARGET)
++	-$(TARGET) -f $(TEST_DB_FILE) -h &gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-$(TARGET) -f $(TEST_DB_FILE) -n &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-$(TARGET) -f $(TEST_DB_FILE) -l &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-$(TARGET) -f $(TEST_DB_FILE) -a &#34;Jennifer Lawrence, 10&#34; &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-$(TARGET) -f $(TEST_DB_FILE) -a &#34;Maria Slovak, 11&#34; &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-$(TARGET) -f $(TEST_DB_FILE) -l &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-$(TARGET) -f $(TEST_DB_FILE) -a &#34;Andrew Herrat, 11&#34; &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-$(TARGET) -f $(TEST_DB_FILE) -u &#34;2,Maria Angel, 12&#34; &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-$(TARGET) -f $(TEST_DB_FILE) -l &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-$(TARGET) -f $(TEST_DB_FILE) -a &#34;Andy Rhomand, 12&#34; &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-xxd $(TEST_DB_FILE) &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-echo &#34;\n&#34; &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-$(TARGET) -f $(TEST_DB_FILE) -d 2 &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++	-$(TARGET) -f $(TEST_DB_FILE) -l &gt;&gt; $(CURDIR)/$(TEST_FILE) 2&gt;&amp;1
++
++
+ clean: 
+ 	echo $(OBJ)
+ 	echo $(SRC)
+diff --git a/src/parse.c b/src/parse.c
+index 1fc948c..eb202cd 100644
+--- a/src/parse.c
++++ b/src/parse.c
+@@ -185,12 +185,12 @@ void list_students(struct dbheader_t* dbheader, struct student_t* students) {
+ 			continue;
+ 		}
+ 		printf(&#34;id : %d\n&#34;,(int)students[i].id);
+-		printf(&#34;name : %s\n&#34;,students[i].name);
+-		printf(&#34;grade : %d\n&#34;, (int)students[i].grade);
+-		printf(&#34;status_flags : %d\n&#34;, (int)students[i].status_flags);
+-		printf(&#34;Enrolled    : %s&#34;, (students[i].status_flags &amp; FLAG_ACTIVE) ? &#34;YES\n&#34; : &#34;NO\n&#34;);
+-		printf(&#34;Graduated   : %s&#34;, (students[i].status_flags &amp; FLAG_GRADUATED) ? &#34;YES\n&#34; : &#34;NO\n&#34;);
+-		printf(&#34;Tution Paid : %s\n&#34;, (students[i].status_flags &amp; FLAG_TUITION_PAID) ? &#34;YES\n&#34; : &#34;NO\n&#34;);
++		printf(&#34;\tname : %s\n&#34;,students[i].name);
++		printf(&#34;\tgrade : %d\n&#34;, (int)students[i].grade);
++		printf(&#34;\tstatus_flags : %d\n&#34;, (int)students[i].status_flags);
++		printf(&#34;\tEnrolled    : %s&#34;, (students[i].status_flags &amp; FLAG_ACTIVE) ? &#34;YES\n&#34; : &#34;NO\n&#34;);
++		printf(&#34;\tGraduated   : %s&#34;, (students[i].status_flags &amp; FLAG_GRADUATED) ? &#34;YES\n&#34; : &#34;NO\n&#34;);
++		printf(&#34;\tTution Paid : %s\n&#34;, (students[i].status_flags &amp; FLAG_TUITION_PAID) ? &#34;YES\n&#34; : &#34;NO\n&#34;);
+ 	}
+ }	
+ 
+@@ -218,8 +218,7 @@ int read_students(int fd, struct dbheader_t* dbheader, struct student_t** studen
+ 	}
+ 	// converting id of every student in students array to host endian
+ 	for(int i=0; i&lt; dbheader-&gt;count; i++) {
+-		// skip the deleted records (we are not gonna use them anyways)
+-		if(!(students[i].status_flags &amp; FLAG_DELETED)) students[i].id = ntohl(students[i].id);
++		students[i].id = ntohl(students[i].id);
+ 		// since status flags and grade are one byte we don&#39;t need to convert their endian
+ 	}
+ 	*studentsOut = students;
+@@ -250,13 +249,11 @@ int write_to_disk(int fd, struct dbheader_t* dbheader, struct student_t* student
+ 	}
+ 	
+ 	// then write the list of students to disk - NOTE : add bool to see if we even need to write students
+-	
+ 	struct student_t* net_students = malloc(dbheader-&gt;count*sizeof(struct student_t));
+ 	memcpy(net_students, students, dbheader-&gt;count*sizeof(struct student_t)); // creating a copy od students array
+ 	// converting id of every student in net_students array to network endian
+ 	for(int i=0; i&lt; dbheader-&gt;count; i++) {
+-		// skip the deleted records
+-		if(!(net_students[i].status_flags &amp; FLAG_DELETED)) net_students[i].id = htonl(net_students[i].id);
++		net_students[i].id = htonl(net_students[i].id);
+ 		// since status flags and grade are one byte we don&#39;t need to convert their endian
+ 	}
+ 	// finally write the students list to disk
+</code></pre><p>Now I will talk about my work and progress on <code>sys_monitor</code>.</p><h2 id=a-brief-summary>A brief summary</h2><p>I actually went to go through the manual <code>man 7 signal</code> as you suggested, and since I didn&rsquo;t know much about signals, I tried to deep dive into all the concepts from very basic and scratch which took a lot of time and I got stuck somewhere, I probably should have come to earlier. But here is what I did and what worked.</p><h2 id=steps--journey>Steps / journey</h2><p>I tried to seek some basic tutorials on internet, and using one of which I used in a test program.
+I wanted to see with a very simple program that how exactly custom signal handler will work.</p><p>So here is the source code I used :</p><pre tabindex=0><code>#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;signal.h&gt;
+
+void handler(int num) {
+	write(STDOUT_FILENO, &#34;\tI won&#39;t die!\n&#34;,14);
+}
+
+int main() {
+	struct sigaction sa;
+	sa.sa_handler = handler;
+	sigaction(SIGINT, &amp;sa, NULL);
+	sigaction(SIGTERM, &amp;sa, NULL);
+	
+	int *a = NULL;
+	while(1) {
+		printf(&#34;Print.. %d\n&#34;,getpid());
+		sleep(1);
+	}
+	return 0;
+}
+</code></pre><p>I ran it and it worked, I used ctrl+C for sigint and it ran the handler function. Similarly I used kill -TERM pid and it ran the same handler.
+I then used sigkill to kill it. here is the output:</p><pre tabindex=0><code>Print.. 99483
+        I won&#39;t die!
+Print.. 99483
+Print.. 99483
+Print.. 99483
+Print.. 99483
+Print.. 99483
+^C      I won&#39;t die!
+Print.. 99483
+Print.. 99483
+Print.. 99483
+Print.. 99483
+Print.. 99483
+Print.. 99483
+Print.. 99483
+Print.. 99483
+Print.. 99483
+Print.. 99483
+Killed                     ./temp
+</code></pre><p>I learned that sigkill is order not request and it can&rsquo;t be caught and handled , similarly sigstop also.</p><p>Then I tried to experiment and try to catch the sigkill anyway. It didn&rsquo;t work.</p><p>Then I decided to try handling sigsegv.
+I modified the program:</p><pre tabindex=0><code>#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;signal.h&gt;
+
+void handler(int num) {
+	write(STDOUT_FILENO, &#34;\tI won&#39;t die!\n&#34;,14);
+}
+
+int main() {
+	struct sigaction sa;
+	sa.sa_handler = handler;
+	sigaction(SIGINT, &amp;sa, NULL);
+	sigaction(SIGTERM, &amp;sa, NULL);
+	
+	sigaction(SIGSEGV, &amp;sa, NULL);
+	int *a = NULL;
+	*a = 11;
+	while(1) {
+		printf(&#34;Print.. %d\n&#34;,getpid());
+		sleep(1);
+	}
+	return 0;
+}
+</code></pre><p>I ran it and it was running the write sys call non stop, I guess because as soon as it tries to dereference null pointer segv occurs and our handler runs but it doesn&rsquo;t handle the error properly it juist printed a line and then again our main function resumes.
+It again tries to dereference and hence again our handler runs and we got stuck in infinite loop (not the while loop ).</p><p>It wasn&rsquo;t printing the pid also so.
+I had to kill it by finding pid from a different terminal using <code>ps aux</code> command. (I don&rsquo;t know much about this command also).
+Here is the outputs:</p><pre tabindex=0><code>        I won&#39;t die!
+        I won&#39;t die!
+        I won&#39;t die!
+        I won&#39;t die!
+        I won&#39;t die!
+        I won&#39;t die!
+Killed                     ./temp
+</code></pre><pre tabindex=0><code>$ ps aux | grep temp
+rkm        99605 92.2  0.0   2216   904 pts/1    R+   19:48   0:08 ./temp
+rkm        99613  0.0  0.0   7840  2088 pts/2    S+   19:49   0:00 grep --color=auto temp
+$ kill -KILL 99605
+</code></pre><p>On the side I also learned that signals are used to communicate with processes and we can use user defined signals as well.
+However I&rsquo;ll take a look later.</p><p>Then in that tutorial explained why we shouldn&rsquo;t use printf or fprintf inside the handlers. Its because signal handliers are asynchronous and write system call is async signal safe.</p><p>I digged a bit about asynchronous function and why printf may crash our program.</p><p>I found on internet that asynchronous means &ldquo;unpredictable timing&rdquo;, which I didn&rsquo;t understand ultimately.</p><p>Please clarify in simple terms.</p><p>But I found the reason why printf is unsafe to use in handlers.
+Printf uses stdout buffer to put string and its not flushed to terminal instantly, instead it is line buffered, which mean unless it hits newline char, it remains in buffer and not sent to terminal to show.</p><p>And it preserves the content in buffer across multiple calls to printf to use the write sys call efficiently. To do so it uses locking to that buffer and hence we find the issue.</p><p>if main&rsquo;s printf starts executing and it firstly locks the stdout buffer, then while execution signal fault occurs and our handler runs.
+Now if our signal handler also has printf call then it will try to aquire lock on same stdout buffer, but its already locked by main&rsquo;s printf, and so it will wait for it to release the lock, but since main is freezed until the handler is completely executed, it waits indefinetly in deadlock.</p><p>I got it why printf use can cause these issues due to its locking nature on stdout.
+But I am not sure about what do we mean by asynchronous exactly, please explain clearly with examples.</p><p>While learning about inner working of printf (just a little), I found that stdout, stdin, stderr are file streams and they are mapped to a region called mapped memory, which lies between heap and stack.
+I furthur investigated and found that this region (in modern systems) grows downwards the same direction as of stack.</p><p>I also learnt a bit about <code>sig_atomic_t</code> which ensures the variable to be atomic read/write essentially I think it makes them semaphores.
+Please you elaborate and explain.</p><p>I also learnt about the volatile keyword, which tells compiler to not cache the variable in register. We need this behaviour because if we are using the variable in handler we won&rsquo;t want it to be cached in register (by compiler optimization).</p><p>for example</p><pre tabindex=0><code>int flag = 0; // Not volatile
+while (flag == 0) {
+    // Do some work that doesn&#39;t touch &#39;flag&#39;
+}
+</code></pre><p>here compiler will see that we are not modifying the flag in loop, so instead or reading flag from memory for n number of times for loop condition, why not add extra copy instruction to copy the flag to a register, and then read from there it will be much faster.</p><p>But if durint loop its interrupted and our handler runs, and then it modifies the flag value inmemory, the loop will have no idea about this and later when handler is done, and main continues, it will be executing incorrectly with old value of flag.</p><p>And finally I wrote the src/signals.c for our <code>sys_monitor</code>:</p><p>src/signals.c :</p><pre tabindex=0><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;signal.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;string.h&gt;
+
+// Global storage to restore original behavior later if needed
+struct sigaction old_action;
+
+// The custom signal handler function
+void segv_handler(int signum, siginfo_t *info, void *context) {
+    // 1. CRITICAL: Use only async-signal-safe functions like write()
+    const char msg[] = &#34;CRITICAL: Caught SIGSEGV (Segmentation Fault)!\n&#34;;
+    write(STDERR_FILENO, msg, sizeof(msg) - 1);
+
+    // 2. Optional: Extract the exact memory address that caused the fault
+    if (info != NULL) {
+        // Note: Formatting strings directly in handlers using printf is unsafe.
+        // This is a minimal, raw illustration using write.
+        write(STDERR_FILENO, &#34;Faulting address: \n&#34;, 19);
+        // system tools or logging would usually resolve info-&gt;si_addr
+    }
+
+    // 3. Reset to default handler so the next fault causes a core dump
+    sigaction(SIGSEGV, &amp;old_action, NULL);
+
+    // 4. Terminate process. Returning from a SIGSEGV handler without 
+    // fixing the memory layout causes an infinite loop of faults.
+    _exit(EXIT_FAILURE); 
+}
+
+int main() {
+    struct sigaction sa;
+
+    // Clear the structure completely
+    memset(&amp;sa, 0, sizeof(sa));
+
+    // Assign the 3-argument handler function
+    sa.sa_sigaction = segv_handler;
+
+    // Use SA_SIGINFO to tell the system to pass advanced info to the handler
+    sa.sa_flags = SA_SIGINFO;
+
+    // Block all other standard signals while this handler runs
+    sigemptyset(&amp;sa.sa_mask);
+
+    // Intercept SIGSEGV and register our custom handler
+    if (sigaction(SIGSEGV, &amp;sa, &amp;old_action) &lt; 0) {
+        perror(&#34;Error registering sigaction&#34;);
+        return 1;
+    }
+
+    printf(&#34;SIGSEGV handler installed. Triggering crash...\n&#34;);
+
+    // Intentionally cause a segmentation fault (dereferencing a NULL pointer)
+    int *ptr = NULL;
+    *ptr = 42; 
+
+    return 0;
+}
+</code></pre><p>Makefile :</p><pre tabindex=0><code>TARGET=bin/final
+CC=gcc
+CFLAGS=-Wall -Wextra -Werror
+SRC=$(wildcard src/*.c)
+OBJ=$(patsubst src/%.c, obj/%.o, $(SRC))
+
+run: clean $(TARGET)
+
+clean:
+	echo $(SRC)
+	echo $(OBJ)	
+	rm -f obj/*
+	rm -f bin/*
+$(TARGET): $(OBJ)
+	$(CC) -g -o $@ $^
+
+obj/%.o: src/%.c
+	$(CC) -g -c -o $@ $&lt; -Iinclude
+</code></pre><p>Here is the output:</p><pre tabindex=0><code>$ make
+echo src/signals.c
+src/signals.c
+echo  obj/signals.o     
+obj/signals.o
+rm -f obj/*
+rm -f bin/*
+gcc -g -c -o obj/signals.o src/signals.c -Iinclude
+gcc -g -o bin/final obj/signals.o
+
+$ bin/final 
+SIGSEGV handler installed. Triggering crash...
+CRITICAL: Caught SIGSEGV (Segmentation Fault)!
+Faulting address: 
+1 $
+</code></pre></div></article></main></div><footer class=footer><span class=footer_item></span>&nbsp;<div class=footer_social-icons></div><small class=footer_copyright>© 2026 .
+Powered by <a href=https://github.com/hugo-sid/hugo-blog-awesome target=_blank rel=noopener>Hugo blog awesome</a>.</small></footer><script src=https://mrhexray.github.io/blog/js/main.min.4ee188e1744c19816e95a540b2650ed9f033ea0371e74eac8e717355cfca8741.js integrity="sha256-TuGI4XRMGYFulaVAsmUO2fAz6gNx506sjnFzVc/Kh0E="></script></body></html>

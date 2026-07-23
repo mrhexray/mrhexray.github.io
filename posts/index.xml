@@ -1,10 +1,182 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Posts on Mr Hex Blog</title>
-    <link>https://mrhexray.github.io/posts/</link>
-    <description>Recent content in Posts on Mr Hex Blog</description>
-    <generator>Hugo -- gohugo.io</generator>
-    <language>en-us</language><atom:link href="https://mrhexray.github.io/posts/index.xml" rel="self" type="application/rss+xml" />
-  </channel>
-</rss>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on Mr Hex Blog</title><link>https://mrhexray.github.io/blog/posts/</link><description>Recent content in Posts on Mr Hex Blog</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 09 Jun 2026 19:05:48 +0000</lastBuildDate><atom:link href="https://mrhexray.github.io/blog/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>Update journal</title><link>https://mrhexray.github.io/blog/posts/update_journal/</link><pubDate>Tue, 09 Jun 2026 19:05:48 +0000</pubDate><guid>https://mrhexray.github.io/blog/posts/update_journal/</guid><description>&lt;p&gt;Before I work on &lt;code&gt;sys_monitor&lt;/code&gt; I will update the current student database a bit and here is the git diff (I didn&amp;rsquo;t committed changes from previous chat message to you, so you may see those changes along side newer changes) :&lt;/p&gt;
+&lt;pre tabindex="0"&gt;&lt;code&gt;diff --git a/Makefile b/Makefile
+index 3245142..8ebd6c5 100644
+--- a/Makefile
++++ b/Makefile
+@@ -3,9 +3,29 @@ CC=gcc
+CFLAGS=-Wall -Wextra -Werror
+SRC=$(wildcard src/*.c)
+OBJ=$(patsubst src/%.c, obj/%.o, $(SRC))
++TEST_DB_FILE=mydb.db
++TEST_FILE=test_output.log
++## CURRENT_DIR := $(CURDIR)
+run: clean $(TARGET)
++test: clean $(TARGET)
++ -$(TARGET) -f $(TEST_DB_FILE) -h &amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -n &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -l &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -a &amp;#34;Jennifer Lawrence, 10&amp;#34; &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -a &amp;#34;Maria Slovak, 11&amp;#34; &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -l &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -a &amp;#34;Andrew Herrat, 11&amp;#34; &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -u &amp;#34;2,Maria Angel, 12&amp;#34; &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -l &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -a &amp;#34;Andy Rhomand, 12&amp;#34; &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -xxd $(TEST_DB_FILE) &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -echo &amp;#34;\n&amp;#34; &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -d 2 &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -l &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++
++
+clean:
+echo $(OBJ)
+echo $(SRC)
+diff --git a/src/parse.c b/src/parse.c
+index 1fc948c..eb202cd 100644
+--- a/src/parse.c
++++ b/src/parse.c
+@@ -185,12 +185,12 @@ void list_students(struct dbheader_t* dbheader, struct student_t* students) {
+continue;
+}
+printf(&amp;#34;id : %d\n&amp;#34;,(int)students[i].id);
+- printf(&amp;#34;name : %s\n&amp;#34;,students[i].name);
+- printf(&amp;#34;grade : %d\n&amp;#34;, (int)students[i].grade);
+- printf(&amp;#34;status_flags : %d\n&amp;#34;, (int)students[i].status_flags);
+- printf(&amp;#34;Enrolled : %s&amp;#34;, (students[i].status_flags &amp;amp; FLAG_ACTIVE) ? &amp;#34;YES\n&amp;#34; : &amp;#34;NO\n&amp;#34;);
+- printf(&amp;#34;Graduated : %s&amp;#34;, (students[i].status_flags &amp;amp; FLAG_GRADUATED) ? &amp;#34;YES\n&amp;#34; : &amp;#34;NO\n&amp;#34;);
+- printf(&amp;#34;Tution Paid : %s\n&amp;#34;, (students[i].status_flags &amp;amp; FLAG_TUITION_PAID) ? &amp;#34;YES\n&amp;#34; : &amp;#34;NO\n&amp;#34;);
++ printf(&amp;#34;\tname : %s\n&amp;#34;,students[i].name);
++ printf(&amp;#34;\tgrade : %d\n&amp;#34;, (int)students[i].grade);
++ printf(&amp;#34;\tstatus_flags : %d\n&amp;#34;, (int)students[i].status_flags);
++ printf(&amp;#34;\tEnrolled : %s&amp;#34;, (students[i].status_flags &amp;amp; FLAG_ACTIVE) ? &amp;#34;YES\n&amp;#34; : &amp;#34;NO\n&amp;#34;);
++ printf(&amp;#34;\tGraduated : %s&amp;#34;, (students[i].status_flags &amp;amp; FLAG_GRADUATED) ? &amp;#34;YES\n&amp;#34; : &amp;#34;NO\n&amp;#34;);
++ printf(&amp;#34;\tTution Paid : %s\n&amp;#34;, (students[i].status_flags &amp;amp; FLAG_TUITION_PAID) ? &amp;#34;YES\n&amp;#34; : &amp;#34;NO\n&amp;#34;);
+}
+}
+@@ -218,8 +218,7 @@ int read_students(int fd, struct dbheader_t* dbheader, struct student_t** studen
+}
+// converting id of every student in students array to host endian
+for(int i=0; i&amp;lt; dbheader-&amp;gt;count; i++) {
+- // skip the deleted records (we are not gonna use them anyways)
+- if(!(students[i].status_flags &amp;amp; FLAG_DELETED)) students[i].id = ntohl(students[i].id);
++ students[i].id = ntohl(students[i].id);
+// since status flags and grade are one byte we don&amp;#39;t need to convert their endian
+}
+*studentsOut = students;
+@@ -250,13 +249,11 @@ int write_to_disk(int fd, struct dbheader_t* dbheader, struct student_t* student
+}
+// then write the list of students to disk - NOTE : add bool to see if we even need to write students
+-
+struct student_t* net_students = malloc(dbheader-&amp;gt;count*sizeof(struct student_t));
+memcpy(net_students, students, dbheader-&amp;gt;count*sizeof(struct student_t)); // creating a copy od students array
+// converting id of every student in net_students array to network endian
+for(int i=0; i&amp;lt; dbheader-&amp;gt;count; i++) {
+- // skip the deleted records
+- if(!(net_students[i].status_flags &amp;amp; FLAG_DELETED)) net_students[i].id = htonl(net_students[i].id);
++ net_students[i].id = htonl(net_students[i].id);
+// since status flags and grade are one byte we don&amp;#39;t need to convert their endian
+}
+// finally write the students list to disk
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Now I will talk about my work and progress on &lt;code&gt;sys_monitor&lt;/code&gt;.&lt;/p&gt;</description></item><item><title>Signals in a nutshell</title><link>https://mrhexray.github.io/blog/posts/signals_in_a_nutshell/</link><pubDate>Mon, 08 Jun 2026 13:53:15 +0000</pubDate><guid>https://mrhexray.github.io/blog/posts/signals_in_a_nutshell/</guid><description>&lt;h1 id="signals"&gt;Signals&lt;/h1&gt;
+&lt;p&gt;In simple terms, signal is a notification sent to a process either by the kernel or another process. It notifies the receiving process about some event which needs urgent attention.
+When a process gets a signal, it pauses its current work to execute a designated &amp;ldquo;signal handler&amp;rdquo; before returning to its normal flow&lt;/p&gt;
+&lt;h2 id="signals-vs-interrupt"&gt;Signals vs Interrupt&lt;/h2&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th style="text-align: left"&gt;Feature&lt;/th&gt;
+&lt;th style="text-align: left"&gt;Signal&lt;/th&gt;
+&lt;th style="text-align: left"&gt;Interrupt&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left"&gt;Description&lt;/td&gt;
+&lt;td style="text-align: left"&gt;Signal is a software mechanism of communicating about events between processes or OS kerenl&lt;/td&gt;
+&lt;td style="text-align: left"&gt;Interrupt is a hardware mechanism to communicate between device (peripherals) and the CPU.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left"&gt;Origin&lt;/td&gt;
+&lt;td style="text-align: left"&gt;Software (kernel or process)&lt;/td&gt;
+&lt;td style="text-align: left"&gt;Hardware (Peripherals or CPU itself)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left"&gt;Target&lt;/td&gt;
+&lt;td style="text-align: left"&gt;A specific running process&lt;/td&gt;
+&lt;td style="text-align: left"&gt;CPU or kernel&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left"&gt;Purpose&lt;/td&gt;
+&lt;td style="text-align: left"&gt;To notify process of an event&lt;/td&gt;
+&lt;td style="text-align: left"&gt;To get immediate attention of CPU&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td style="text-align: left"&gt;Handling&lt;/td&gt;
+&lt;td style="text-align: left"&gt;Handled in user space by the receiving process&lt;/td&gt;
+&lt;td style="text-align: left"&gt;Handled kernel space by a driver or OS kernel&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;&lt;strong&gt;Analogy&lt;/strong&gt;&lt;/p&gt;</description></item><item><title>Diff output</title><link>https://mrhexray.github.io/blog/posts/diff_out/</link><pubDate>Sat, 30 May 2026 03:41:31 +0000</pubDate><guid>https://mrhexray.github.io/blog/posts/diff_out/</guid><description>&lt;h2 id="my-code-updates"&gt;My code Updates&lt;/h2&gt;
+&lt;p&gt;Here is the git diff :&lt;/p&gt;
+&lt;pre tabindex="0"&gt;&lt;code class="language-git" data-lang="git"&gt;diff --git a/Makefile b/Makefile
+index 3245142..8ebd6c5 100644
+--- a/Makefile
++++ b/Makefile
+@@ -3,9 +3,29 @@ CC=gcc
+CFLAGS=-Wall -Wextra -Werror
+SRC=$(wildcard src/*.c)
+OBJ=$(patsubst src/%.c, obj/%.o, $(SRC))
++TEST_DB_FILE=mydb.db
++TEST_FILE=test_output.log
++## CURRENT_DIR := $(CURDIR)
+run: clean $(TARGET)
++test: clean $(TARGET)
++ -$(TARGET) -f $(TEST_DB_FILE) -h &amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -n &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -l &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -a &amp;#34;Jennifer Lawrence, 10&amp;#34; &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -a &amp;#34;Maria Slovak, 11&amp;#34; &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -l &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -a &amp;#34;Andrew Herrat, 11&amp;#34; &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -u &amp;#34;2,Maria Angel, 12&amp;#34; &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -l &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -a &amp;#34;Andy Rhomand, 12&amp;#34; &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -xxd $(TEST_DB_FILE) &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -echo &amp;#34;\n&amp;#34; &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -d 2 &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++ -$(TARGET) -f $(TEST_DB_FILE) -l &amp;gt;&amp;gt; $(CURDIR)/$(TEST_FILE) 2&amp;gt;&amp;amp;1
++
++
+clean:
+echo $(OBJ)
+echo $(SRC)
+diff --git a/src/parse.c b/src/parse.c
+index 1fc948c..81daec7 100644
+--- a/src/parse.c
++++ b/src/parse.c
+@@ -218,8 +218,7 @@ int read_students(int fd, struct dbheader_t* dbheader, struct student_t** studen
+}
+// converting id of every student in students array to host endian
+for(int i=0; i&amp;lt; dbheader-&amp;gt;count; i++) {
+- // skip the deleted records (we are not gonna use them anyways)
+- if(!(students[i].status_flags &amp;amp; FLAG_DELETED)) students[i].id = ntohl(students[i].id);
++ students[i].id = ntohl(students[i].id);
+// since status flags and grade are one byte we don&amp;#39;t need to convert their endian
+}
+*studentsOut = students;
+@@ -250,13 +249,11 @@ int write_to_disk(int fd, struct dbheader_t* dbheader, struct student_t* student
+}
+// then write the list of students to disk - NOTE : add bool to see if we even need to write students
+-
+struct student_t* net_students = malloc(dbheader-&amp;gt;count*sizeof(struct student_t));
+memcpy(net_students, students, dbheader-&amp;gt;count*sizeof(struct student_t)); // creating a copy od students array
+// converting id of every student in net_students array to network endian
+for(int i=0; i&amp;lt; dbheader-&amp;gt;count; i++) {
+- // skip the deleted records
+- if(!(net_students[i].status_flags &amp;amp; FLAG_DELETED)) net_students[i].id = htonl(net_students[i].id);
++ net_students[i].id = htonl(net_students[i].id);
+// since status flags and grade are one byte we don&amp;#39;t need to convert their endian
+}
+// finally write the students list to disk
+&lt;/code&gt;&lt;/pre&gt;</description></item><item><title>Mypost</title><link>https://mrhexray.github.io/blog/posts/mypost/</link><pubDate>Wed, 27 May 2026 17:11:50 +0000</pubDate><guid>https://mrhexray.github.io/blog/posts/mypost/</guid><description>&lt;p&gt;This is the start of mrhexray blog&lt;/p&gt;</description></item></channel></rss>

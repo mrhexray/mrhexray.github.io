@@ -1,14 +1,1 @@
-
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-  xmlns:xhtml="http://www.w3.org/1999/xhtml">
-  <url>
-    <loc>https://mrhexray.github.io/categories/</loc>
-  </url><url>
-    <loc>https://mrhexray.github.io/</loc>
-  </url><url>
-    <loc>https://mrhexray.github.io/posts/</loc>
-  </url><url>
-    <loc>https://mrhexray.github.io/tags/</loc>
-  </url>
-</urlset>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml"><url><loc>https://mrhexray.github.io/blog/</loc><lastmod>2026-06-09T19:05:48+00:00</lastmod></url><url><loc>https://mrhexray.github.io/blog/posts/</loc><lastmod>2026-06-09T19:05:48+00:00</lastmod></url><url><loc>https://mrhexray.github.io/blog/posts/update_journal/</loc><lastmod>2026-06-09T19:05:48+00:00</lastmod></url><url><loc>https://mrhexray.github.io/blog/posts/signals_in_a_nutshell/</loc><lastmod>2026-06-08T13:53:15+00:00</lastmod></url><url><loc>https://mrhexray.github.io/blog/posts/diff_out/</loc><lastmod>2026-05-30T03:41:31+00:00</lastmod></url><url><loc>https://mrhexray.github.io/blog/posts/mypost/</loc><lastmod>2026-05-27T17:11:50+00:00</lastmod></url><url><loc>https://mrhexray.github.io/blog/categories/</loc></url><url><loc>https://mrhexray.github.io/blog/tags/</loc></url></urlset>
